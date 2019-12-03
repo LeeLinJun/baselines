@@ -44,6 +44,7 @@ def evaluate_env(env_name, seed, policy_hidden_size, stochastic, reuse, prefix):
 
     def get_checkpoint_dir(checkpoint_list, limit, prefix):
         for checkpoint in checkpoint_list:
+            print(checkpoint, limit, ('limitation_'+str(limit) in checkpoint))
             if ('limitation_'+str(limit) in checkpoint) and (prefix in checkpoint):
                 return checkpoint
         return None

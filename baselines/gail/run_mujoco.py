@@ -52,6 +52,7 @@ def argsparser():
     # Behavior Cloning
     boolean_flag(parser, 'pretrained', default=False, help='Use BC to pretrain')
     parser.add_argument('--BC_max_iter', help='Max iteration for training BC', type=int, default=1e4)
+    parser.add_argument('--render', action='store_true', help='render env')
     return parser.parse_args()
 
 
@@ -72,6 +73,8 @@ def main(args):
     U.make_session(num_cpu=1).__enter__()
     set_global_seeds(args.seed)
     env = gym.make(args.env_id)
+    if args.render:
+        env.render()
 
     def policy_fn(name, ob_space, ac_space, reuse=False):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
@@ -111,7 +114,8 @@ def main(args):
                timesteps_per_batch=1024,
                number_trajs=10,
                stochastic_policy=args.stochastic_policy,
-               save=args.save_sample
+               save=args.save_sample,
+               render=args.render
                )
     else:
         raise NotImplementedError
@@ -155,7 +159,7 @@ def train(env, seed, policy_fn, reward_giver, dataset, algo,
 
 
 def runner(env, policy_func, load_model_path, timesteps_per_batch, number_trajs,
-           stochastic_policy, save=False, reuse=False):
+           stochastic_policy, save=False, reuse=False, render=False):
 
     # Setup network
     # ----------------------------------------
@@ -172,7 +176,7 @@ def runner(env, policy_func, load_model_path, timesteps_per_batch, number_trajs,
     len_list = []
     ret_list = []
     for _ in tqdm(range(number_trajs)):
-        traj = traj_1_generator(pi, env, timesteps_per_batch, stochastic=stochastic_policy)
+        traj = traj_1_generator(pi, env, timesteps_per_batch, stochastic=stochastic_policy, render=render)
         obs, acs, ep_len, ep_ret = traj['ob'], traj['ac'], traj['ep_len'], traj['ep_ret']
         obs_list.append(obs)
         acs_list.append(acs)
@@ -194,7 +198,7 @@ def runner(env, policy_func, load_model_path, timesteps_per_batch, number_trajs,
 
 
 # Sample one trajectory (until trajectory end)
-def traj_1_generator(pi, env, horizon, stochastic):
+def traj_1_generator(pi, env, horizon, stochastic, render=False):
 
     t = 0
     ac = env.action_space.sample()  # not used, just so we have the datatype
@@ -217,6 +221,8 @@ def traj_1_generator(pi, env, horizon, stochastic):
         acs.append(ac)
 
         ob, rew, new, _ = env.step(ac)
+        if render:
+            env.render()
         rews.append(rew)
 
         cur_ep_ret += rew

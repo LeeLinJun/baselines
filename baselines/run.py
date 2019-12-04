@@ -13,6 +13,8 @@ from baselines.common.cmd_util import common_arg_parser, parse_unknown_args, mak
 from baselines.common.tf_util import get_session
 from baselines import logger
 from importlib import import_module
+import torch
+from tqdm import tqdm
 
 try:
     from mpi4py import MPI
@@ -227,13 +229,34 @@ def main(args):
         dones = np.zeros((1,))
 
         episode_rew = np.zeros(env.num_envs) if isinstance(env, VecEnv) else np.zeros(1)
-        while True:
-            if state is not None:
-                actions, _, state, _ = model.step(obs,S=state, M=dones)
-            else:
-                actions, _, _, _ = model.step(obs)
 
-            obs, rew, done, _ = env.step(actions)
+        # for gail expert traj
+        traj_num = 0
+        max_traj_num = 50
+        pbar = tqdm(total=max_traj_num)
+        states, actions, rewards, lengths = [], [], [], []
+        
+        length = 0
+        traj_states, traj_actions, traj_rewards  = [], [], []
+        # End gail expert traj
+
+        while traj_num < max_traj_num:
+            if state is not None:
+                action, _, state, _ = model.step(obs,S=state, M=dones)
+            else:
+                action, _, _, _ = model.step(obs)
+            if isinstance(obs, dict):
+                traj_states.append(torch.from_numpy(obs['observation']))
+            else:
+                traj_states.append(torch.from_numpy(obs))
+
+            obs, rew, done, _ = env.step(action)
+
+            traj_actions.append(torch.from_numpy(action))
+            traj_rewards.append(torch.from_numpy(rew))
+            length += 1
+            
+            
             episode_rew += rew
             env.render()
             done_any = done.any() if isinstance(done, np.ndarray) else done
@@ -241,7 +264,25 @@ def main(args):
                 for i in np.nonzero(done)[0]:
                     print('episode_rew={}'.format(episode_rew[i]))
                     episode_rew[i] = 0
+                states.append(torch.cat(traj_states).unsqueeze(0))
+                actions.append(torch.cat(traj_actions).unsqueeze(0))
+                rewards.append(torch.cat(traj_rewards).unsqueeze(0))
+                lengths.append(length)
+                length = 0
+                traj_states = []
+                traj_actions = []
+                traj_rewards = []
+                traj_num += 1
+                pbar.update(1)
 
+        states_tensor = torch.cat(states)
+        actions_tensor = torch.cat(actions)
+        rewards_tensor = torch.cat(rewards)
+        lengths_tensor = torch.tensor(lengths, dtype=torch.int64)
+        torch.save({'states': states_tensor, 'actions': actions_tensor, 'rewards': rewards_tensor, 'lengths': lengths_tensor},
+                os.path.join(args.gail_expert_dir, 'trajs_' + args.env_name.split('-')[0].lower() + '.pt'))
+
+        pbar.close()
     env.close()
 
     return model

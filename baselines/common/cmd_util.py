@@ -171,6 +171,9 @@ def common_arg_parser():
     parser.add_argument('--save_video_length', help='Length of recorded video. Default: 200', default=200, type=int)
     parser.add_argument('--log_path', help='Directory to save learning curve data.', default=None, type=str)
     parser.add_argument('--play', default=False, action='store_true')
+    parser.add_argument('--save_traj', default=False, action='store_true', help='Whether save trajectory')
+    parser.add_argument('--save_traj_path', default='.', type=str, help='Path for trajectory')
+    parser.add_argument('--max_traj', default=50, type=int, help='Number of trajectories')
     return parser
 
 def robotics_arg_parser():

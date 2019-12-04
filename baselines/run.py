@@ -247,8 +247,8 @@ def main(args):
             else:
                 action, _, _, _ = model.step(obs)
             if args.save_traj:
-                if isinstance(obs, dict):
-                    traj_states.append(torch.from_numpy(obs['observation']))
+                if isinstance(obs, dict) and args.env.startswith('Fetch'):
+                    traj_states.append(torch.from_numpy(np.hstack((obs['observation'],obs['desired_goal']))))
                 else:
                     traj_states.append(torch.from_numpy(obs))
 

@@ -234,7 +234,7 @@ def main(args):
         # for gail expert traj
         if args.save_traj:
             traj_num = 0
-            max_traj_num = 1
+            max_traj_num = args.max_traj
             pbar = tqdm(total=max_traj_num)
             states, actions, rewards, lengths = [], [], [], []
             length = 0

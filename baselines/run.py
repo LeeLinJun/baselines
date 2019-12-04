@@ -283,7 +283,7 @@ def main(args):
         rewards_tensor = torch.cat(rewards)
         lengths_tensor = torch.tensor(lengths, dtype=torch.int64)
         torch.save({'states': states_tensor, 'actions': actions_tensor, 'rewards': rewards_tensor, 'lengths': lengths_tensor},
-                   os.path.join(args.save_traj_path, './trajs_' + args.env.split('-')[0].lower() + '.pt'))
+                   os.path.join(args.save_traj_path, 'trajs_' + args.env.split('-')[0].lower() + '.pt'))
 
         pbar.close()
     env.close()

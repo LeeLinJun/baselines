@@ -255,7 +255,7 @@ def main(args):
             obs, rew, done, _ = env.step(action)
 
             if args.save_traj:
-                traj_actions.append(torch.from_numpy(action))
+                traj_actions.append(torch.from_numpy(action).unsqueeze(0))
                 traj_rewards.append(torch.from_numpy(rew))
                 length += 1
 

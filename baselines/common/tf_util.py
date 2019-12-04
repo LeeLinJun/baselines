@@ -374,7 +374,7 @@ def load_variables(load_path, variables=None, sess=None):
     # fname = os.path.expanduser(load_path)
     # saver = tf.train.Saver()
     # saver.restore(sess, fname)
-    
+
 
 # ================================================================
 # Shape adjustment for feeding into tf placeholders

@@ -15,6 +15,7 @@ from baselines import logger
 from importlib import import_module
 import torch
 from tqdm import tqdm
+import os
 
 try:
     from mpi4py import MPI
@@ -232,10 +233,9 @@ def main(args):
 
         # for gail expert traj
         traj_num = 0
-        max_traj_num = 50
+        max_traj_num = 1
         pbar = tqdm(total=max_traj_num)
         states, actions, rewards, lengths = [], [], [], []
-        
         length = 0
         traj_states, traj_actions, traj_rewards  = [], [], []
         # End gail expert traj
@@ -255,8 +255,7 @@ def main(args):
             traj_actions.append(torch.from_numpy(action))
             traj_rewards.append(torch.from_numpy(rew))
             length += 1
-            
-            
+
             episode_rew += rew
             env.render()
             done_any = done.any() if isinstance(done, np.ndarray) else done
@@ -280,7 +279,7 @@ def main(args):
         rewards_tensor = torch.cat(rewards)
         lengths_tensor = torch.tensor(lengths, dtype=torch.int64)
         torch.save({'states': states_tensor, 'actions': actions_tensor, 'rewards': rewards_tensor, 'lengths': lengths_tensor},
-                os.path.join(args.gail_expert_dir, 'trajs_' + args.env_name.split('-')[0].lower() + '.pt'))
+                   os.path.join('./trajs_' + args.env.split('-')[0].lower() + '.pt'))
 
         pbar.close()
     env.close()
